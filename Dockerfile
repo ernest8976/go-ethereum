@@ -1,3 +1,5 @@
+# docker build -t ernest/eth .
+
 # Support setting various labels on the final image
 ARG COMMIT=""
 ARG VERSION=""
@@ -6,22 +8,16 @@ ARG BUILDNUM=""
 # Build Geth in a stock Go builder container
 FROM golang:1.18-alpine as builder
 
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 RUN apk add --no-cache gcc musl-dev linux-headers git
 
-# Get dependencies - will also be cached if we won't change go.mod/go.sum
-COPY go.mod /go-ethereum/
-COPY go.sum /go-ethereum/
-
-RUN go env -w GOPROXY=https://goproxy.cn,direct
-RUN cd /go-ethereum && go mod download
-
 ADD . /go-ethereum
-RUN cd /go-ethereum && go run build/ci.go install -static ./cmd/geth
+RUN go env -w GOPROXY=https://goproxy.cn,direct
+RUN cd /go-ethereum && go run build/ci.go install ./cmd/geth
 
 # Pull Geth into a second stage deploy alpine container
 FROM alpine:latest
 
+RUN apk add bind-tools jq curl bash git redis
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /go-ethereum/build/bin/geth /usr/local/bin/
 COPY --from=builder /go-ethereum/start.sh /root/start.sh
