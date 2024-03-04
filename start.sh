@@ -19,6 +19,7 @@ geth \
   --gcmode archive \
   --nodiscover \
   --networkid 85643456 \
+  --rpc.allow-unprotected-txs true \
   -http --http.addr 0.0.0.0 --http.port 8545 \
   --http.corsdomain "*" \
   --http.api "eth,net,web3,debug" \
